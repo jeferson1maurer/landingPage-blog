@@ -43,10 +43,12 @@ export function getAllPosts(): Post[] {
       const fullPath = path.join(postsDirectory, file);
       const fileContent = fs.readFileSync(fullPath, "utf-8");
 
-      const { data } = matter<Frontmatter, string>(fileContent);
+      const { data } = matter(fileContent);
+      const frontmatter = data as Frontmatter;
 
       return {
         slug,
+        ...frontmatter,
         title: data.title,
         description: data.description,
         image: data.image,
