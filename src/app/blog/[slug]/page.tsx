@@ -9,15 +9,37 @@ import {
 } from "@/components/ui/breadcrumb";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
 import { PostShare } from "@/templates/blog/components/post-share";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
 
 type Props = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+   const post = getPostBySlug(slug);
+
+   if(!post) {
+    return {}
+   }
+
+   return {
+    title: post.frontmatter.title,
+    description: post.frontmatter.description,
+    authors: [{name: post.frontmatter.author.name}],
+    robots: 'index, follow',
+    openGraph: {
+      images: [post.frontmatter.image],
+    }
+
+   }
+}
 
 export async function generateStaticParams() {
   const posts = getAllPosts();
