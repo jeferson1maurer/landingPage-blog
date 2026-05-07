@@ -8,69 +8,41 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
-import { GetStaticPaths, GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PostShare } from "./components/post-share";
 
 type Props = {
-  post: {
-    frontmatter: {
-      title: string;
-      description: string;
-      image: string;
-      date: string;
-      author: {
-        name: string;
-        avatar: string;
-      };
-    };
-    content: string;
+  params: {
+    slug: string;
   };
 };
 
-export const getStaticPaths: GetStaticPaths = async () => {
+export async function generateStaticParams() {
   const posts = getAllPosts();
 
-  const paths = posts.map((post) => ({
-    params: { slug: post.slug },
+  return posts.map((post) => ({
+    slug: post.slug,
   }));
+}
 
-  return {
-    paths,
-    fallback: false,
-  };
-};
-
-export const getStaticProps: GetStaticProps<Props> = async ({
-  params,
-}) => {
+export default async function PostPage({ params }: Props) {
   if (!params?.slug) {
-    return {
-      notFound: true,
-    };
+    notFound();
   }
 
-  const post = getPostBySlug(params.slug as string);
+  const post = getPostBySlug(params.slug);
 
   if (!post) {
-    return {
-      notFound: true,
-    };
+    notFound();
   }
 
-  return {
-    props: {
-      post,
-    },
-  };
-};
+  const publishedDate = new Date(
+    post.frontmatter.date
+  ).toLocaleDateString("pt-BR");
 
-export default function PostPage({ post }: Props) {
-  const publishedDate = new Date(post.frontmatter.date).toLocaleDateString(
-    "pt-BR",
-  );
-  const postUrl = `https://site.set/blog/${post}`;
+  const postUrl = `https://site.set/blog/${params.slug}`;
 
   return (
     <main className="py-20 text-gray-100">
@@ -108,10 +80,7 @@ export default function PostPage({ post }: Props) {
             </figure>
 
             <header className="p-4 md:p-6 lg:p-12 pb-0 mt-8 md:mt-12">
-              <h1
-                className="mb-8 text-balance text-heading-lg md:text-heading-xl 
-            lg:text-heading-xl"
-              >
+              <h1 className="mb-8 text-balance text-heading-lg md:text-heading-xl lg:text-heading-xl">
                 {post.frontmatter.title}
               </h1>
 
@@ -121,8 +90,12 @@ export default function PostPage({ post }: Props) {
                   alt={post.frontmatter.author.name}
                   size="sm"
                 />
+
                 <Avatar.Content>
-                  <Avatar.Title>{post?.frontmatter.author.name}</Avatar.Title>
+                  <Avatar.Title>
+                    {post.frontmatter.author.name}
+                  </Avatar.Title>
+
                   <Avatar.Description>
                     Publicado em{" "}
                     <time dateTime={post.frontmatter.date}>
